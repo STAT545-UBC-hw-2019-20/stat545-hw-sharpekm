@@ -8,7 +8,7 @@ This is a repository for my homework assignments for the [STAT 545](https://stat
 
 | **Assignment**   | **Due Date**       | **Status**
 | ------------     | --------           | --------- 
-| **Assignment **  | September 17, 2019 | :scream:
+| **Assignment **  | September 17, 2019 | :thumbsup:
 | **Assignment 2** | September 24, 2019 | :scream:
 | **Assignmennt 3**| October 1, 2019    | :scream:
 | **Assignment 4** | October 8, 2019    | :scream:
