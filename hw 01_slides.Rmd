@@ -1,0 +1,91 @@
+---
+title: "Homework 01 -- Exploring Gapminder Slides"
+author: "Kimberly Sharpe"
+date: "17/09/2019"
+output:
+  ioslides_presentation: 
+    widescreen: true
+  beamer_presentation: default
+---
+
+<!-- load packages and gapminder dataset  -->
+
+```{r load packages, echo=FALSE}
+library(tibble)
+library(DT)
+library(gapminder)
+library(ggplot2)
+```
+
+# For hw01, we are going to be exploring the gapminder dataset
+
+
+---
+First, let's convert gapminder to a tibble and wrap it in a datatable
+
+```{r datatable, echo=FALSE}
+datatable(as_tibble(gapminder))
+```
+
+
+# Next, let's explore the structure of the dataset
+
+
+## What are the column names in our dataset?
+
+```{r}
+names(gapminder)
+```
+
+
+## What types of variables does the dataset contain?
+
+```{r}
+str(gapminder)
+```
+
+
+## Let's get a summary of the the dataset
+
+```{r}
+summary(gapminder)
+```
+
+
+
+# Next, let's do some basic analyses
+
+
+## How many countries are in our dataset?
+
+```{r}
+length(unique(gapminder$country))
+```
+
+
+## What is the range of GDP in our dataset? 
+
+```{r}
+range(gapminder$gdpPercap)
+```
+
+
+## What about the range for life expectacy in our dataset?
+
+```{r}
+range(gapminder$lifeExp)
+```
+
+
+
+## Finally, let's look at life expectancy by continent
+```{r boxplot, echo=FALSE}
+ggplot(gapminder, aes(continent, lifeExp, fill=continent)) +
+  geom_boxplot() +
+  theme_bw() +
+  xlab("Continent") +
+  ylab("Life Expectancy (years)")
+```
+
+
+

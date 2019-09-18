@@ -62,7 +62,7 @@ length(unique(gapminder$country))
 ```
 
 
-What is the range of GDP in our dataset? and life expectancy in our dataset?
+What is the range of GDP in our dataset? 
 
 ```{r}
 range(gapminder$gdpPercap)
