@@ -1,0 +1,163 @@
+---
+title: "Homework 02"
+author: "Kimberly Sharpe"
+output:
+  html_document:
+    keep_md: yes
+    theme: paper
+  output:
+    html_document:
+     df_print: paged
+---
+
+<!--- allow for errors while knitting-->
+
+```{r allow errors, echo = FALSE}
+knitr::opts_chunk$set(error = TRUE)
+```
+
+<!--- load packages needed for the assignment ---> 
+
+```{r load packages, echo=FALSE, message=FALSE}
+library(gapminder)
+suppressPackageStartupMessages(library(tibble))
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(scales))
+```
+ 
+# Exercise 1: Basic dplyr 
+
+## 1.1 subsetting gapminder to three countries in the 1970s
+```{r choose 3 countries in 1970s}
+gapminder %>% 
+  filter(year > 1969 & year < 1980, 
+        country == "Afghanistan" |
+        country == "Canada" | 
+        country == "Denmark")
+```
+## 1.2 using a pipe operator to select country & gdpPercap from filtered dataset
+ 
+```{r}
+gapminder %>% 
+  filter(year > 1969 & year < 1980, 
+        country == "Afghanistan" |
+        country == "Canada" | 
+        country == "Denmark") %>% 
+  select(country, gdpPercap)
+  
+```
+
+## 1.3 filtering gapminder to all entries that have experienced a drop in life expectancy
+
+
+```{r}
+gapminder %>% 
+  select(country, year, lifeExp) %>% 
+  arrange(country, year) %>% 
+  group_by(country) %>% 
+  mutate(diff_LifeExp = lifeExp - lag(lifeExp)) %>% 
+  filter(diff_LifeExp < 0)
+  
+```
+
+
+## 1.4 showing max GDP per capita experienced by each country 
+```{r}
+gapminder %>% 
+  group_by(country) %>% 
+  summarise(max_gdpPercap = max(gdpPercap)) # %>%
+ # arrange(max_gdpPercap)  ##just for fun
+```
+
+## 1.5 producing a scatterplot of Canada's life expectancy vs GDP 
+Ensure log scale
+Pipe directly into ggplot after altering dataset
+
+```{r}
+gapminder %>% 
+  filter(country == "Canada") %>% 
+  ggplot(aes(gdpPercap, lifeExp)) +
+  geom_point(color = "blue") +
+  scale_x_log10("GDP per capita", labels = scales::dollar_format()) +
+  theme_bw() +
+  ylab("Life Expectancy")
+```
+
+
+# Exercise 2: Explore individual variables with dplyr
+
+**Choose one categorial and one quantitative variable:**
+Categorical variable: continent
+Quantative variable: gdpPercap
+
+## What are the possible values of each variable?
+
+**Continent:** 
+
+How many continents are in the dataset?
+```{r}
+gapminder %>% 
+  select(continent) %>% 
+  summarize(n_unique = n_distinct(continent))
+
+```
+
+What continents are included in the dataset?
+```{r}
+gapminder %>% 
+  group_by(continent) %>% 
+  summarize(n_unique = n_distinct(continent))
+
+```
+
+How many countries are in each continent?
+
+```{r}
+gapminder %>% 
+  select(continent, country) %>% 
+  group_by(continent) %>% 
+  summarize(n_unique = n_distinct(country))
+```
+
+Can I visualize this in a graph?
+Note: divide by 12 because there are 12 time points per country
+
+```{r}
+ggplot(gapminder, aes(fill=continent)) + 
+  geom_bar(aes(continent, ..count../12)) +
+  xlab("Continent") +
+  ylab("Number of Countries")
+
+```
+
+
+**GDP per capita**
+
+```{r}
+gapminder %>% 
+  select(gdpPercap) %>% 
+  range()
+```
+
+```{r}
+gapminder %>% 
+  select(gdpPercap) %>% 
+  median() %>% 
+```
+
+
+```{r}
+ggplot(data=gapminder, aes(x=gdpPercap, y=year)) +
+    geom_boxplot(alpha=0.3)
+```
+
+
+What values are typical? What's the spread? What's the distribution? (tailored to each variable at hand)
+
+
+# Exercise #3: Explore various plot types
+
+##  life expectancies of continents over time?
+
+## population of each continent over time?
