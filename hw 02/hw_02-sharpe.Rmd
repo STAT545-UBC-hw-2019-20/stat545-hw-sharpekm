@@ -7,7 +7,8 @@ output:
     theme: paper
   output:
     html_document:
-     df_print: paged
+      df_print: paged
+  pdf_document: default
 ---
 
 <!--- allow for errors while knitting-->
@@ -20,15 +21,15 @@ knitr::opts_chunk$set(error = TRUE)
 
 ```{r load packages, echo=FALSE, message=FALSE}
 library(gapminder)
-suppressPackageStartupMessages(library(tibble))
-suppressPackageStartupMessages(library(tidyverse))
-suppressPackageStartupMessages(library(ggplot2))
-suppressPackageStartupMessages(library(scales))
+library(tibble)
+library(tidyverse)
+library(ggplot2)
+library(scales)
 ```
  
 # Exercise 1: Basic dplyr 
 
-## 1.1 subsetting gapminder to three countries in the 1970s
+#### 1.1 subsetting gapminder to three countries in the 1970s
 ```{r choose 3 countries in 1970s}
 gapminder %>% 
   filter(year > 1969 & year < 1980, 
@@ -36,49 +37,47 @@ gapminder %>%
         country == "Canada" | 
         country == "Denmark")
 ```
-## 1.2 using a pipe operator to select country & gdpPercap from filtered dataset
- 
+
+
+#### 1.2 using a pipe operator to select country & gdpPercap from filtered dataset
+GDP per capita in the 1970s 
 ```{r}
 gapminder %>% 
   filter(year > 1969 & year < 1980, 
         country == "Afghanistan" |
         country == "Canada" | 
         country == "Denmark") %>% 
-  select(country, gdpPercap)
+  select(country, gdpPercap, year)
   
 ```
 
-## 1.3 filtering gapminder to all entries that have experienced a drop in life expectancy
-
-
+#### 1.3 filtering gapminder to all entries that have experienced a drop in life expectancy
 ```{r}
-gapminder %>% 
-  select(country, year, lifeExp) %>% 
-  arrange(country, year) %>% 
+gapminder %>%
+  arrange(year) %>% 
   group_by(country) %>% 
   mutate(diff_LifeExp = lifeExp - lag(lifeExp)) %>% 
-  filter(diff_LifeExp < 0)
-  
+  filter(diff_LifeExp < 0) %>% 
+  arrange(diff_LifeExp)
 ```
 
 
-## 1.4 showing max GDP per capita experienced by each country 
+
+#### 1.4 showing max GDP per capita experienced by each country 
 ```{r}
 gapminder %>% 
+  select(country, year, gdpPercap) %>% 
   group_by(country) %>% 
-  summarise(max_gdpPercap = max(gdpPercap)) # %>%
- # arrange(max_gdpPercap)  ##just for fun
+  filter(gdpPercap == max(gdpPercap)) 
 ```
 
-## 1.5 producing a scatterplot of Canada's life expectancy vs GDP 
-Ensure log scale
-Pipe directly into ggplot after altering dataset
 
+#### 1.5 producing a scatterplot of Canada's life expectancy vs GDP 
 ```{r}
 gapminder %>% 
   filter(country == "Canada") %>% 
   ggplot(aes(gdpPercap, lifeExp)) +
-  geom_point(color = "blue") +
+  geom_point(color = "green") +
   scale_x_log10("GDP per capita", labels = scales::dollar_format()) +
   theme_bw() +
   ylab("Life Expectancy")
@@ -93,9 +92,9 @@ Quantative variable: gdpPercap
 
 ## What are the possible values of each variable?
 
-**Continent:** 
+#### Continent: 
 
-How many continents are in the dataset?
+*How many continents are in the dataset?*
 ```{r}
 gapminder %>% 
   select(continent) %>% 
@@ -103,61 +102,95 @@ gapminder %>%
 
 ```
 
-What continents are included in the dataset?
+*What continents are included in the dataset?*
 ```{r}
 gapminder %>% 
   group_by(continent) %>% 
   summarize(n_unique = n_distinct(continent))
-
 ```
 
-How many countries are in each continent?
-
+*How many countries are in each continent?*
 ```{r}
 gapminder %>% 
-  select(continent, country) %>% 
   group_by(continent) %>% 
-  summarize(n_unique = n_distinct(country))
+  count(n_distinct(country))
 ```
 
-Can I visualize this in a graph?
+
+*Can I visualize this in a graph?*
 Note: divide by 12 because there are 12 time points per country
-
 ```{r}
-ggplot(gapminder, aes(fill=continent)) + 
-  geom_bar(aes(continent, ..count../12)) +
+ggplot(gapminder) + 
+  geom_bar(aes(continent, ..count../12, fill=continent)) +
   xlab("Continent") +
-  ylab("Number of Countries")
+  ylab("Number of Countries") +
+  theme_bw()
 
 ```
 
 
-**GDP per capita**
+#### GDP per capita
 
+*Let's get run summary to find the range, median and mean for GDP per capita*
 ```{r}
 gapminder %>% 
   select(gdpPercap) %>% 
-  range()
+  summary() 
 ```
 
+*Which country had the lowest GDP per capita and which country had the highest GDP per capita in this dataset?*
 ```{r}
 gapminder %>% 
-  select(gdpPercap) %>% 
-  median() %>% 
+  select(country, year, gdpPercap) %>% 
+  filter(gdpPercap == min(gdpPercap) | gdpPercap == max(gdpPercap)) %>% 
+    group_by(country) 
 ```
+The Democratic Republic of Congo (in 2002) had the lowest GDP per capita. Kuwait (in 1957) had the highest GDP per capita.
 
 
+*What other countries had the lowest GDP per capita?*
 ```{r}
-ggplot(data=gapminder, aes(x=gdpPercap, y=year)) +
-    geom_boxplot(alpha=0.3)
+gapminder %>% 
+  group_by(continent, year) %>% 
+  summarize(min_GDP = min(gdpPercap),
+            country = country[gdpPercap == min_GDP]) %>% 
+  arrange(min_GDP)
 ```
 
 
-What values are typical? What's the spread? What's the distribution? (tailored to each variable at hand)
+*We can also see when each country had their lowest verses their highest GDP per capita*
+```{r}
+gapminder %>% 
+  select(country, year, gdpPercap) %>% 
+  group_by(country) %>% 
+  filter(gdpPercap == min(gdpPercap) | gdpPercap == max(gdpPercap)) 
+```
+
 
 
 # Exercise #3: Explore various plot types
 
-##  life expectancies of continents over time?
+####  GDP by life expectancy in 2007
+```{r}
+gapminder %>% 
+  filter(year == 2007) %>% 
+  ggplot(aes(gdpPercap,lifeExp)) +
+  geom_point(aes(color=continent)) +
+  theme_bw() +
+  labs(x="GDP Per Capita", y="Life Expectancy")
+```
 
-## population of each continent over time?
+
+#### Median GDP per capita by continent over time 
+
+```{r}
+gapminder %>% 
+  group_by(year, continent) %>% 
+  summarize(median_GDP = median(gdpPercap)) %>% 
+  ggplot(aes(x=year, y=median_GDP, colour=continent)) +
+  geom_line() +
+  theme_bw() +
+  labs(x="Year", y ="Median GDP Per Capita") 
+```
+
+
