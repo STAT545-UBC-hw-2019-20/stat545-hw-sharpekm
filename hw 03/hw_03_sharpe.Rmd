@@ -1,0 +1,152 @@
+---
+title: "HW 03"
+output:
+  html_document:
+    keep_md: yes
+    theme: paper
+  pdf_document: default
+---
+
+<!---The following chunk allows errors when knitting--->
+
+```{r allow errors, echo = FALSE}
+knitr::opts_chunk$set(error = TRUE, warning = FALSE)
+```
+
+<!-- load the required packages! --->
+```{r, message = FALSE, warning = FALSE}
+library(gapminder)
+library(tibble)
+library(tidyverse)
+library(ggplot2)
+library(scales)
+```
+
+# Assignment #3 - Choose three coding options 
+
+##  Task Option 2: Get the maximum and minimum GDP per capita for all continents
+
+I chose this option because for a previous assignment I looked at the minimum and maximum GDP per capita overall. Now I'd like to figure out how to do it for each continent. 
+
+<!---
+So this code works, but it's not pretty... is there another way?
+```{r}
+gapminder %>% 
+  select(continent, year, gdpPercap) %>% 
+  group_by(continent) %>% 
+  filter(gdpPercap == min(gdpPercap) | gdpPercap == max(gdpPercap))
+```
+--->
+
+<!--- The summarize function makes more sense to use although it doesn't display the year for the min and max GDP, which would be interesting to know. 
+Also don't need to select() in this iteration. --->
+
+**First, calculate the minimum and maximum GDP per capita using the summarize() function.**
+```{r}
+gapminder %>% 
+  group_by(continent) %>% 
+  summarize(min_GDP = min(gdpPercap), max_GDP = max(gdpPercap))
+```
+
+
+**Second, visualizing this data in a graph:**
+
+<!--- Note to self: the alpha needs to be outside the aes() function or else it'll show up as a legend on the side.
+https://stackoverflow.com/questions/11714951/remove-extra-legends-in-ggplot2 --->
+
+
+<!--- https://stackoverflow.com/questions/33221794/separate-palettes-for-facets-in-ggplot-facet-grid/33222028#33222028 <-- It looks like it's difficult to get a good looking colour gradient. Maybe next time... --->
+
+<!--- learned through accidentally keeping both the min and max geom_col coding lines that I can use that to plot both ---> 
+
+```{r}
+gapminder %>% 
+  group_by(continent) %>% 
+  summarize(min_GDP = min(gdpPercap), max_GDP = max(gdpPercap)) %>% 
+
+ggplot(aes(colour=GDP)) +
+  geom_col(aes(continent, min_GDP, colour = "Min GDP"), alpha = 0.4) +
+  geom_col(aes(continent, max_GDP, colour = "Max GDP"), alpha = 0.4) +
+  theme_bw() +
+  scale_y_log10(labels = scales::dollar_format()) +
+  labs(x="Continent", y="(log) GDP Per Capita") +
+  ggtitle("Minimum and Maximum GDP Per Capita for Each Continent")
+```
+
+**Finally, some thoughts about what the data says:**
+Asia has the biggest discrepnacy between minimum GDP and maximum GDP per capita. 
+
+
+# Task 5: How is life expectancy changing over time on different continents?
+
+To examine this, I am looking at the median life expectancy.
+
+**First, using the group_by() and summarize() functions to look at life expectancy over time**
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>% 
+  summarize(lifeExp = median(lifeExp)) %>% 
+  DT::datatable()
+```
+
+**Second, let's visualize the data.**
+<!--- for future reference on how to put labels at the end of plot points:
+https://stackoverflow.com/questions/29357612/plot-labels-at-ends-of-lines ---> 
+
+```{r}
+gapminder %>% 
+  group_by(year, continent) %>% 
+  summarize(lifeExp = median(lifeExp)) %>% 
+  ggplot(aes(x=year, y=lifeExp, colour=continent)) +
+  geom_line() +
+  theme_bw() +
+#  geom_dl(aes(label = continent), method = list(dl.trans(x = x + .2), "last.points")) + couldn't figure out how to get the labels within the graph confines
+#  facet_wrap(~ continent, scales = "free_y") + liked it better all on one graph for comparison
+#  theme(legend.position = "none") +
+  labs(x="Year", y ="Median Life Expectency") +
+  ggtitle("Life Expectancy Over Time")
+```
+
+The table and graph suggest that for ...
+
+
+
+
+# Task 4: Compute a trimmed mean of life expectancy for different years 
+<!--- https://www.rdocumentation.org/packages/DescTools/versions/0.99.19/topics/Trim how to use trim() function ---> 
+
+**First, calculate trimmed means across all continents for each year using trim in the mean() function.**
+```{r}
+gapminder %>% 
+  group_by(year) %>% 
+  summarize(trim_LifeExp = mean(lifeExp, trim = 0.10)) 
+# summarize(trim_LifeExp = mean(lifeExp, trim =3)) can also trim a specific number from each end.
+```
+
+
+**Second, plot the the trimmed means.**
+
+```{r}
+gapminder %>% 
+  group_by(year) %>% 
+  summarize(trim_LifeExp = mean(lifeExp, trim = 0.10)) %>% 
+
+  ggplot(aes(x=factor(year), y=trim_LifeExp)) +
+  geom_point(colour = "darkseagreen4", size = 3, shape = 21, stroke = 2) +
+  labs(x = "Year", y = "Mean (trimmed)") +
+  theme(legend.position = "none") +
+  theme_bw() +
+  ggtitle("Mean Life Expectancy Over Time for All Continents")
+
+
+```
+
+<!---
+Plotting trimmed means by year - alternative: 
+I came across an alternative on the old STAT 545 message board. https://github.com/STAT545-UBC/Discussion/issues/132 & https://ggplot2.tidyverse.org/reference/stat_summary.html and decided this may be a tidier way to display the data --->
+
+
+
+
+
+
