@@ -1,9 +1,13 @@
 ---
 title: "HW 03"
+author: Kimberly Sharpe
 output:
   html_document:
     keep_md: yes
     theme: paper
+  output:
+    html_document:
+      df_print: paged
   pdf_document: default
 ---
 
@@ -41,7 +45,7 @@ gapminder %>%
 <!--- The summarize function makes more sense to use although it doesn't display the year for the min and max GDP, which would be interesting to know. 
 Also don't need to select() in this iteration. --->
 
-**First, calculate the minimum and maximum GDP per capita using the summarize() function.**
+**First, I calculated the minimum and maximum GDP per capita using the summarize() function.**
 ```{r}
 gapminder %>% 
   group_by(continent) %>% 
@@ -49,7 +53,7 @@ gapminder %>%
 ```
 
 
-**Second, visualizing this data in a graph:**
+**Second, I visualized the minimum and maximum GDP per capita in a stacked bar graph:**
 
 <!--- Note to self: the alpha needs to be outside the aes() function or else it'll show up as a legend on the side.
 https://stackoverflow.com/questions/11714951/remove-extra-legends-in-ggplot2 --->
@@ -73,15 +77,14 @@ ggplot(aes(colour=GDP)) +
   ggtitle("Minimum and Maximum GDP Per Capita for Each Continent")
 ```
 
-**Finally, some thoughts about what the data says:**
-Asia has the biggest discrepnacy between minimum GDP and maximum GDP per capita. 
+The table and graph show that Asia and Africa have the biggest discrepnacy between minimum GDP and maximum GDP per capita. The smallest discrepency is in Oceania. 
 
 
 # Task 5: How is life expectancy changing over time on different continents?
 
 To examine this, I am looking at the median life expectancy.
 
-**First, using the group_by() and summarize() functions to look at life expectancy over time**
+**First, I used the group_by() and summarize() functions to look at life expectancy over time for each continent**
 ```{r}
 gapminder %>% 
   group_by(continent, year) %>% 
@@ -89,7 +92,7 @@ gapminder %>%
   DT::datatable()
 ```
 
-**Second, let's visualize the data.**
+**Second, I visusalized the median life expectancy over time for each continent using a line graph**
 <!--- for future reference on how to put labels at the end of plot points:
 https://stackoverflow.com/questions/29357612/plot-labels-at-ends-of-lines ---> 
 
@@ -107,7 +110,7 @@ gapminder %>%
   ggtitle("Life Expectancy Over Time")
 ```
 
-The table and graph suggest that for ...
+The table and graph show that life expectancy in Africa has lagged compared to the 4 other continents. Oceania has consistency had the highest life expectancy, followed by Europe. Life expectency in all contients has risen, however Africa saw a leveling out and then decline in the 1990s and early 2000s.
 
 
 
@@ -115,7 +118,7 @@ The table and graph suggest that for ...
 # Task 4: Compute a trimmed mean of life expectancy for different years 
 <!--- https://www.rdocumentation.org/packages/DescTools/versions/0.99.19/topics/Trim how to use trim() function ---> 
 
-**First, calculate trimmed means across all continents for each year using trim in the mean() function.**
+**First, I calculated trimmed means across all continents for each year using trim in the summarize and mean() functions.**
 ```{r}
 gapminder %>% 
   group_by(year) %>% 
@@ -124,7 +127,7 @@ gapminder %>%
 ```
 
 
-**Second, plot the the trimmed means.**
+**Second, I plotted the the trimmed means for all continents by year.**
 
 ```{r}
 gapminder %>% 
@@ -140,12 +143,11 @@ gapminder %>%
 
 
 ```
-
 <!---
 Plotting trimmed means by year - alternative: 
 I came across an alternative on the old STAT 545 message board. https://github.com/STAT545-UBC/Discussion/issues/132 & https://ggplot2.tidyverse.org/reference/stat_summary.html and decided this may be a tidier way to display the data --->
 
-
+Life expectancy has been steadily rising across all continents since 1952, although it has levelled off somewhat starting in the 1990s. 
 
 
 
