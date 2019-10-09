@@ -1,0 +1,186 @@
+---
+title: 'Assignment # 4 - STAT545'
+author: "Kimberly Sharpe"
+output: 
+    html_document:
+    keep_md: true
+    theme: paper
+---
+
+<!---The following chunk allows errors when knitting--->
+
+```{r allow errors, echo = FALSE}
+knitr::opts_chunk$set(error = TRUE, warning = FALSE)
+```
+
+Loading tidyverse, ggplot and gapminder packages for Exericse #1 and #1
+```{r, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(gapminder)
+```
+
+## Exercise #1: Univariate Data Reshaping 
+I have chosen to do **Option 1**
+
+**1.0 Make a tibble with one row per year, and columns for life expectancy for two or more countries.**
+
+I am going to make a tibble with one row per year for life expectancy for Turkey and Finland. 
+I am keeping the year column, so id_cols = year, the new columns will be coming from the country variable and I am pulling the values of lifeExp.
+```{r}
+gap_lifeExp <- gapminder %>% 
+  select(year, lifeExp, country) %>% 
+  filter(country== "Turkey" 
+         | country== "Finland") %>% 
+  pivot_wider(id_cols = year, 
+              names_from = country,
+              values_from = lifeExp)
+  DT::datatable(gap_lifeExp)
+```
+
+**1.2.Take advantage of this new data shape to scatterplot life expectancy for one country against that of another.**
+
+I am going to take the widened data and create a scatterplot to visualize life expectancy of Turkey compared to Finland using ggplot.
+## labelling the scale on my plot: https://ggplot2.tidyverse.org/reference/scale_manual.html
+#Not sure why the colours are switched when I label them...?
+```{r}
+gap_lifeExp %>% 
+  ggplot() +
+  geom_point(aes(x=year,y= Finland, colour = "blue")) +
+  geom_point(aes(x=year, y= Turkey, colour = "black")) +
+  theme_bw() +
+  ggtitle("Turkey vs Finland Life Expectacy: 1952-2007") +
+  labs(y = "life expectancy") +
+    scale_color_manual(name = "Country",
+                     values = c("blue", "black"), 
+                     labels = c('Turkey', 'Finland'))
+```
+
+
+The life expectancy in Turkey has risen at a faster rate than the life expectancy in Finland. The life expectancy in the two countries has converged since 1952. 
+
+**1.3 Re-lengthen the data.**
+
+Using pivot_longer() I will make the data long again. I use id_cols = -year because I want to turn the other columns (Turkey and Finland) into a single column. The old column names will be going into a new column named country and the values are coming from the life expectancy variabe.
+
+```{r}
+gap_lifeExp %>% 
+  pivot_longer(cols = -year,
+              names_to = "country",
+              values_to = "lifeExp") %>% 
+  DT::datatable()
+```
+
+
+## Exercise 2: Multivariate Data Reshaping
+
+I have chosen to do **Option 1** 
+
+**2.1 Make a tibble with one row per year, and columns for life expectancy and GDP per capita (or two other numeric variables) for two or more countries.**
+
+For this I use pivot_wider(). I am going to use Turkey and Finland again. I want to keep year, so id_cols is year. The new columns are coming from the country variable. The values that are under the new columns come from both lifeExp and gdpPercap. 
+```{r}
+gap_life_gdp <- gapminder %>% 
+  select(year, lifeExp, country, gdpPercap) %>% 
+   filter(country== "Turkey" 
+         | country== "Finland") %>% 
+  pivot_wider(id_cols = year,
+              names_from =  country,
+              names_sep = "_",
+              values_from = c(lifeExp, gdpPercap)) 
+  DT::datatable(gap_life_gdp)
+  
+```
+
+**2.2 Re-lengthen the data.**
+
+To re-lengthen the data, I will be using pivot_longer. I want to only keep the column year the same, so I use -year to indidicate everything but year. I also want one part of the old column names to stay as columns, so I've used .value, instead of a new column name and then the other column name is "country". 
+
+```{r}
+gap_life_gdp %>% 
+  pivot_longer(cols =  -year,
+               names_to = c(".value", "country"),
+               names_sep = "_") %>% 
+  DT::datatable()
+```
+
+
+## Exercise #3: Table Joins
+
+Do *all 3* exercises in this section
+
+Reading in the made-up wedding guestlist and email addresses
+
+```{r}
+guest <- read_csv("https://raw.githubusercontent.com/STAT545-UBC/Classroom/master/data/wedding/attend.csv")
+email <- read_csv("https://raw.githubusercontent.com/STAT545-UBC/Classroom/master/data/wedding/emails.csv")
+```
+
+**3.1 For each guest in the guestlist (guest tibble), add a column for email address, which can be found in the email tibble.**
+
+Taking a quick look at the datasets
+```{r}
+view(guest)
+view(email)
+```
+
+To add a column for email address for each guest in the guest tibble, I need to ensure there is one line for each email. I will use the separate_rows() function so that each guest has a corresponding email. 
+```{r}
+guest_email <- email %>% 
+  separate_rows(guest, sep = ", ") 
+  
+DT::datatable(guest_email)  
+```
+
+
+Now I need to join this to the guest dataset. I will use left_join because we want emails for each guest in the guestlist, so the important observations to keep are those in the guest tibble.
+In the email tibble, guests are listed under the variable "guest" and in the guest tibble, guests are listed under the variable "name". When I join to the guest tibble I had to specificy that in by =.
+ 
+```{r}
+guest %>% 
+  left_join(guest_email, by = c("name" = "guest")) %>% 
+
+DT::datatable()
+```
+ 
+ 
+**3.2 Who do we have emails for, yet are not on the guestlist?**
+
+I am using the anti_join() function. Because it will drop all observations in the guest tibble that have a match in the email tibbl, leaving me with guests who have email addresses but aren't on the guestlist. Anti_join is good for diagnosing join mismatches. 
+I used the rename() function because in the email tibble, guests are listed under the variable "guest" and in the guest tibble, guests are listed under the variable "name"
+
+```{r}
+no_guestlist <- guest_email %>% 
+  rename(name=guest) %>% 
+  anti_join(guest, by="name")  
+  
+DT::datatable(no_guestlist)
+
+```
+
+There are 3 guests that we have an email for but they are not in the guestlist. 
+
+
+**3.3 Make a guestlist that includes everyone we have emails for (in addition to those on the original guestlist)**
+
+To do this I will use a full_join because it keeps all the observations in the guest tibble and all the observations in the email tibble when it joins them together. 
+Joining guest and guest_email tibble because it has all guests with their corresponding emails on separate lines.
+
+Note to self: The guest_email tiddble didn't have the renamed "name" variable (I did that in 3.2, not 3.1) and I forgot that, which made me waste a lot of time trying to figure things out.  
+
+```{r}
+
+full_guest <- guest %>% 
+  full_join(guest_email, by = c("name" = "guest"))  
+  
+  DT::datatable(full_guest)
+  
+
+
+```
+
+ There were 5 people who didn't have email addresses and 3 people who we had email addresses for but no additional information. 
+
+
+
+
