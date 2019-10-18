@@ -6,7 +6,7 @@ Below you'll find the link for the rendered HTML output for this assignment.
 
 | **Assignment**   | **HTML Link**       | 
 | ------------     | --------           | 
-| **Assignment 5**  | [Hw 05 HTML](https://stat545-ubc-hw-2019-20.github.io/stat545-hw-sharpekm/hw 05/hw_05_sharpe_2.html) | 
+| **Assignment 5**  | [Hw 05 HTML](https://stat545-ubc-hw-2019-20.github.io/stat545-hw-sharpekm/hw%2005/hw_05_sharpe_2.html) | 
 
 
 
