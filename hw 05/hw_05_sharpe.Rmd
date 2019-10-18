@@ -1,0 +1,288 @@
+---
+title: 'Assignment # 5 - STAT545'
+author: "Kimberly Sharpe"
+output: 
+    html_document:
+    keep_md: true
+    theme: paper
+---
+
+<!---The following chunk allows errors when knitting--->
+
+```{r allow errors, echo = FALSE}
+knitr::opts_chunk$set(error = TRUE, warning = FALSE)
+```
+
+Loading tidyverse, ggplot and gapminder packages for Exericse #1 and #1
+```{r setup, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(ggplot2)
+library(gapminder)
+library(here)
+library(forcats)
+library(DT)
+library(readr)
+library(gridExtra)
+library(ggridges)
+```
+
+# Exercise 1: Explain the value of the here package
+(maximum 250 words)
+
+The blog raised the importance of using both Rprojects and the here package. One of the benefits of using Rprojects is when you're in a project, you don't need to set your working directory - the directory is already where your projet is. Another benefit is that Rprojects also clears the R environment when you switch projects. The here package is useful to use with Rprojects because it makes it easier to manage sub-directories in your project (so you can more easily manage folders for Rmarkdown vs data vs other folders you've added). For instance, Rmarkdown sets a local working directory so you must use a longer relative path to read in data files - with here() it finds the project directory for you. Because here() allows you to read and write data without specifying every path explicitly, it allows you to work across operating systems (Mac, Windows, Linnux), which is useful for when you're working collaboratively or when you're interested in the reproducibility of your work.  
+
+
+# Exercise 2: Factor management
+I've chosen to use the gapminder dataset for this exercise.
+
+### Elaboration for the gapminder data set
+
+*Drop Oceania*
+
+First, I want to see if continent is a factor and then how many levels it has. Second, I want to drop the Oceana level in continent. I will do this by using the fcr_drop() function in the forcats package. Then I am checking to make sure I have properly dropped Oceania:
+## I looked at https://stat545.com/factors-boss.html as well as class materials 
+## (using droplevels() this drops unsed from all factors (including continent and the associated countries))
+
+```{r}
+class(gapminder$continent)
+levels(gapminder$continent)
+
+gap_2 <- gapminder %>%
+  filter(continent != "Oceania") %>%  ## keep everything except Oceania
+  mutate(continent = forcats::fct_drop(continent)) ## using fct_drop() to remove the level from continent 
+
+levels(gapminder_2$continent)
+  
+```
+
+
+
+*Reorder the levels of country or continent*
+
+Using this new dataset without Oceania, I will create a barplot to look at mean life expectancy for each continent in 2007.
+
+First filtering and grouping the dataset and calculating the minimum life expectancy for 2007.
+
+```{r}
+gap_life <- gap_2 %>% 
+  filter(year == 2007) %>% 
+  group_by(continent) %>% 
+  summarize(min_lifeExp = min(lifeExp))
+
+gap_life
+
+```
+
+Then I am visualizing this information in a bar plot.
+
+```{r}
+gap_life %>% 
+  ggplot() +
+  geom_col(aes(x = continent, y = min_lifeExp, fill = continent)) +
+  theme_bw() +
+  ggtitle("Minimum Life Expectancy in 2007") +
+  labs(y = "life expectancy") 
+
+```
+
+
+
+In the above plot, I can see that Africa has the lowest life expectancy in 2007, followed by Asia, Americans and then Europe. I want to reorder the levels of continent based on life expectancy. 
+## I used the information in https://stat545.com/factors-boss.html#reorder-factors as a resource for this component of the exercise 
+
+```{r}
+gap_life %>% 
+  ggplot() +
+  geom_col(aes(x = fct_reorder(continent, min_lifeExp), y = min_lifeExp, fill = continent)) +
+  theme_bw() +
+  ggtitle("Minimum Life Expectancy in 2007") +
+  labs(x = "continent", y = "life expectancy") 
+
+```
+
+I am also going to use the arrange() function to order continent from smallest to largest.
+
+```{r}
+gap_life %>% 
+  arrange(min_lifeExp)
+
+```
+
+
+# Exercise 3: File input/output (I/O)
+
+*Task: Experiment with at least one of:*
+
+*write_csv()/read_csv() (and/or TSV friends),*
+*saveRDS()/readRDS(),*
+*dput()/dget().*
+
+First I am creating a new gapminder dataset so that it can be exported to disk. I am saving it as gap_3.
+I am limiting this dataset to countries from the Amricas am looking at median GDP per capita.
+
+```{r}
+gapGDP <- gapminder %>% 
+  filter(continent == "Americas") %>% 
+  group_by(country) %>% 
+  summarize(med_GDP = median(gdpPercap))  
+  
+DT::datatable(gapGDP)
+
+```
+
+
+Exporting the data using the write_csv function and the "here" package. I am going to put the data
+
+```{r}
+write_csv(gapGDP, here::here("Hw 05", "gapGDP.csv"))
+```
+
+I checked in my hw 05 folder and the data was successfully exported!
+
+
+Now to re-import the data using read_csv() and the "here" package. 
+
+```{r}
+gapGDP_new <- read_csv(here::here("Hw 05", "gapGDP.csv"))
+
+DT::datatable(gapGDP_new)  ## looks like the file survived the import
+
+```
+
+Now that the data has been imported, I am going to reorder median GDP for countries in the Americas.
+
+```{r}
+gapGDP_new %>% 
+  ggplot() +
+  geom_col(aes(x = fct_reorder(country, med_GDP), y = med_GDP, fill = country)) +
+  theme_bw() +
+  coord_flip() + # displaying horizontally
+  theme(legend.position = "none") + # getting rid of the legend because it makes the plot so messy
+  ggtitle("Median GDP Per Capita") +
+  labs(x = "", y = "Median GDP Per Capita") 
+
+```
+
+I also want to try manually reordering the values so that Brazil is first and a different colour.
+
+```{r}
+gapGDP_new %>% 
+  ggplot() +
+  geom_col(aes(x = fct_relevel(country, "Brazil", after = 25), y = med_GDP, fill = country == "Brazil")) +
+  theme_bw() +
+  coord_flip() + # displaying horizontally
+  theme(legend.position = "none") + # getting rid of the legend because it makes the plot so messy
+  ggtitle("Median GDP Per Capita") +
+  labs(x = "", y = "Median GDP Per Capita") 
+```
+
+
+
+# Exercise 4: Visualization design
+
+*Improve a visualization I've created perior to the last week of the course*
+
+I have chosen a plot from my first assignment to improve. I made a boxplot of life expectancy by continent.
+
+This is the original plot:
+
+```{r}
+(OG_plot <- ggplot(gapminder, aes(continent, lifeExp, fill=continent)) +
+  geom_boxplot() +
+  theme_bw() +
+  xlab("Continent") +
+  ylab("Life Expectancy (years)"))
+
+
+```
+
+
+
+I'm now going to improve upon this plot with stratgies I've learned since assignment #2. 
+
+I used this https://rafalab.github.io/dsbook/gapminder.html & https://cran.r-project.org/web/packages/ggridges/vignettes/introduction.html websites to learn more about this function.
+
+
+- The first thing I'm going to do is make life expectancy into life expectancy for the year 2007. Just because this is a bit more meaningful. 
+- In lecture 8, we learned that ridge plots were an alternative to boxplots and I quite liked them, so I am going to change this from a box plot to a ridge plot. In ridgeplots the axes are reversed compared to the box plot.
+- One thing that makes the plot less attractive is that the axes labels are not centered. 
+
+- **So, I feel I've improved this graph save for one major issue - it's missing the data for Oceania for some reason unknown to me and I've run out of time to figure it out! So peer reviewers or TA, what obvious mistake am I making here?**
+
+```{r, fig.width = 8, fig.height = 5}
+(NEW_plot <- gapminder %>%
+  filter(year == 2007 | year == 1952) %>% 
+
+  
+ggplot(aes(lifeExp, fct_reorder(continent, lifeExp), fill = continent)) +
+  ggridges::geom_density_ridges(scale = 2) +
+  theme_ridges(grid = FALSE) +
+  xlab("Life Expectancy (years)") +
+  theme(axis.title.y = element_blank()) +
+  facet_grid(. ~ year) +
+  ggtitle("Life Expectancy by Continent"))
+  
+
+
+```
+
+```{r}
+x = fct_reorder(country, med_GDP)
+
+gapGDP_new %>% 
+  ggplot() +
+  geom_col(aes(x = fct_reorder(country, med_GDP), y = med_GDP, fill = country)) +
+  theme_bw() +
+  coord_flip() + # displaying horizontally
+  theme(legend.position = "none") + # getting rid of the legend because it makes the plot so messy
+  ggtitle("Median GDP Per Capita") +
+  labs(x = "", y = "Median GDP Per Capita")
+```
+
+
+I'm now plotting them side-by-side to look at the difference.
+
+I learned how to do this through the peer review activies and https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2 
+
+```{r, fig.width = 11, fig.height = 5}
+gridExtra::grid.arrange(OG_plot, NEW_plot, ncol=2,
+                        widths = c(2.5,2.5))
+                       
+```
+
+
+# Exercise 5: Writing figures to file
+
+Use ggsave() to save a plot to file. I am going to use the original plot I had in assignment #2 for this exercise. 
+
+```{r}
+OG_plot2 <- gapminder %>% 
+  group_by(year, continent) %>% 
+  summarize(median_GDP = median(gdpPercap)) %>% 
+  ggplot(aes(x=year, y=median_GDP, colour=continent)) +
+  geom_line() +
+  theme_bw() +
+  labs(x="Year", y ="Median GDP Per Capita") 
+
+```
+
+Now I will save it using ggsave() to my Hw 05 folder. 
+ Declaring the plot is important if you want to add other diagrams - without specifying plot = " " it saves the most recent plot. 
+
+```{r}
+ggsave(here::here("Hw 05", "Hw05Plot.png"), plot = OG_plot2)
+```
+
+![Fig. 1: Imported Plot](firstletter_boxplot.png)
+
+I can also play around with the settings of the image.
+
+```{r}
+ggsave(here::here("Hw 05", "Hw05 Plot Edited.png"), plot = OG_plot2, width = 5, height = 5)
+```
+
+
+```{r}
+Click here to see the ![plot](/figure-html/LifeExp.jpg). 
+```
+
